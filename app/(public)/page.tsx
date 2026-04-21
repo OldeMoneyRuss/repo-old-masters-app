@@ -7,46 +7,76 @@ import { publicUrl } from "@/lib/storage";
 
 export const revalidate = 60;
 
-async function getFeaturedArtworks() {
-  return db
-    .select({
-      id: artworks.id,
-      slug: artworks.slug,
-      title: artworks.title,
-      artistName: artists.name,
-      catalogKey: assets.key,
-      catalogWidth: assets.widthPx,
-      catalogHeight: assets.heightPx,
-    })
-    .from(artworks)
-    .leftJoin(artists, eq(artists.id, artworks.artistId))
-    .leftJoin(
-      assets,
-      and(eq(assets.artworkId, artworks.id), eq(assets.kind, "catalog")),
-    )
-    .where(eq(artworks.publishStatus, "published"))
-    .orderBy(desc(artworks.sortWeight), desc(artworks.publishedAt))
-    .limit(8);
+type FeaturedArtwork = {
+  id: string;
+  slug: string;
+  title: string;
+  artistName: string | null;
+  catalogKey: string | null;
+  catalogWidth: number | null;
+  catalogHeight: number | null;
+};
+
+type ArtistOption = { slug: string; name: string };
+type MovementOption = {
+  slug: string;
+  name: string;
+  dateRangeLabel: string | null;
+};
+
+async function getFeaturedArtworks(): Promise<FeaturedArtwork[]> {
+  try {
+    return await db
+      .select({
+        id: artworks.id,
+        slug: artworks.slug,
+        title: artworks.title,
+        artistName: artists.name,
+        catalogKey: assets.key,
+        catalogWidth: assets.widthPx,
+        catalogHeight: assets.heightPx,
+      })
+      .from(artworks)
+      .leftJoin(artists, eq(artists.id, artworks.artistId))
+      .leftJoin(
+        assets,
+        and(eq(assets.artworkId, artworks.id), eq(assets.kind, "catalog")),
+      )
+      .where(eq(artworks.publishStatus, "published"))
+      .orderBy(desc(artworks.sortWeight), desc(artworks.publishedAt))
+      .limit(8);
+  } catch (err) {
+    console.warn("[homepage] Featured artworks query failed:", err);
+    return [];
+  }
 }
 
-async function getBrowseData() {
-  const [artistList, movementList] = await Promise.all([
-    db
-      .select({ slug: artists.slug, name: artists.name })
-      .from(artists)
-      .orderBy(asc(artists.name))
-      .limit(8),
-    db
-      .select({
-        slug: movements.slug,
-        name: movements.name,
-        dateRangeLabel: movements.dateRangeLabel,
-      })
-      .from(movements)
-      .orderBy(asc(movements.name))
-      .limit(8),
-  ]);
-  return { artistList, movementList };
+async function getBrowseData(): Promise<{
+  artistList: ArtistOption[];
+  movementList: MovementOption[];
+}> {
+  try {
+    const [artistList, movementList] = await Promise.all([
+      db
+        .select({ slug: artists.slug, name: artists.name })
+        .from(artists)
+        .orderBy(asc(artists.name))
+        .limit(8),
+      db
+        .select({
+          slug: movements.slug,
+          name: movements.name,
+          dateRangeLabel: movements.dateRangeLabel,
+        })
+        .from(movements)
+        .orderBy(asc(movements.name))
+        .limit(8),
+    ]);
+    return { artistList, movementList };
+  } catch (err) {
+    console.warn("[homepage] Browse data query failed:", err);
+    return { artistList: [], movementList: [] };
+  }
 }
 
 export default async function HomePage() {
