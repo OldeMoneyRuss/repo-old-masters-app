@@ -25,10 +25,14 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test
+        run: npm test
+
+      - name: Audit
+        run: npm audit --audit-level=high
+
       - name: Build
         run: npm run build
         env:
-          # Dummy values so Next.js build does not fail on env access.
-          # Real secrets live in Vercel Environment Variables.
           NEXTAUTH_SECRET: ci-placeholder-secret-do-not-use-in-prod
           NEXTAUTH_URL: http://localhost:3000
