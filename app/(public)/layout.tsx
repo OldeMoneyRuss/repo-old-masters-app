@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartBadge } from "@/components/storefront/CartBadge";
 
 export default function PublicLayout({
   children,
@@ -26,7 +27,7 @@ export default function PublicLayout({
               <Link href="/movements">Movements</Link>
             </li>
             <li>
-              <Link href="/cart">Cart</Link>
+              <CartBadge />
             </li>
             <li>
               <Link href="/account">Account</Link>
