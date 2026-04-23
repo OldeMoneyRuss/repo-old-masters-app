@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type CartItem = {
   id: string;
@@ -59,22 +59,24 @@ export default function CartPage() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/cart", { credentials: "same-origin" });
-      if (!res.ok) throw new Error("Failed to load cart");
-      const data = (await res.json()) as Cart;
-      setCart(data);
-    } catch {
-      setError("Unable to load your cart. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/cart", { credentials: "same-origin" });
+        if (!res.ok) throw new Error("Failed to load cart");
+        const data = (await res.json()) as Cart;
+        if (!cancelled) setCart(data);
+      } catch {
+        if (!cancelled) setError("Unable to load your cart. Please try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const updateQty = async (itemId: string, nextQty: number) => {
     if (nextQty < 1 || nextQty > 10) return;

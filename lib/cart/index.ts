@@ -57,6 +57,7 @@ export async function getOrCreateCart(
     .limit(1);
 
   if (existing) {
+    await extendCartExpiry(existing.id);
     return { id: existing.id, guestToken: existing.guestToken };
   }
 
@@ -73,10 +74,18 @@ export async function getOrCreateCart(
   return { id: created.id, guestToken: created.guestToken };
 }
 
+export async function extendCartExpiry(cartId: string): Promise<void> {
+  await db
+    .update(carts)
+    .set({ expiresAt: newExpiry(), updatedAt: new Date() })
+    .where(eq(carts.id, cartId));
+}
+
 export type CartWithItems = {
   id: string;
   itemCount: number;
   subtotalCents: number;
+  removedUnpublishedCount: number;
   items: Array<{
     id: string;
     artworkId: string;
@@ -101,6 +110,7 @@ export async function getCartWithItems(cartId: string): Promise<CartWithItems> {
       artworkTitle: artworks.title,
       artistName: artists.name,
       thumbKey: assets.key,
+      publishStatus: artworks.publishStatus,
       printSize: cartItems.printSize,
       paperType: cartItems.paperType,
       quantity: cartItems.quantity,
@@ -117,7 +127,10 @@ export async function getCartWithItems(cartId: string): Promise<CartWithItems> {
     .where(eq(cartItems.cartId, cartId))
     .orderBy(cartItems.createdAt);
 
-  const items = rows.map((r) => ({
+  const publishedRows = rows.filter((r) => r.publishStatus === "published");
+  const removedUnpublishedCount = rows.length - publishedRows.length;
+
+  const items = publishedRows.map((r) => ({
     id: r.id,
     artworkId: r.artworkId,
     artworkSlug: r.artworkSlug,
@@ -134,7 +147,13 @@ export async function getCartWithItems(cartId: string): Promise<CartWithItems> {
   const itemCount = items.reduce((n, i) => n + i.quantity, 0);
   const subtotalCents = items.reduce((n, i) => n + i.lineTotalCents, 0);
 
-  return { id: cartId, itemCount, subtotalCents, items };
+  return {
+    id: cartId,
+    itemCount,
+    subtotalCents,
+    removedUnpublishedCount,
+    items,
+  };
 }
 
 export async function mergeGuestCart(

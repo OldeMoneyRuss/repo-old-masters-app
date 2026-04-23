@@ -8,6 +8,20 @@
       "when": 1776708676096,
       "tag": "0000_icy_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776800000000,
+      "tag": "0001_sprint3_order_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777200000000,
+      "tag": "0002_sprint2_audit_fixes",
+      "breakpoints": true
     }
   ]
 }

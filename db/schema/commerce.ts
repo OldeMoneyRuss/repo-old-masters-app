@@ -22,6 +22,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "pending_payment",
   "paid",
   "in_production",
+  "quality_check",
   "shipped",
   "delivered",
   "cancelled",
@@ -109,6 +110,8 @@ export const orders = pgTable(
     stripePaymentIntentId: varchar("stripe_payment_intent_id", {
       length: 100,
     }),
+    trackingNumber: varchar("tracking_number", { length: 120 }),
+    trackingCarrier: varchar("tracking_carrier", { length: 80 }),
     placedAt: timestamp("placed_at", { withTimezone: true }),
     shippedAt: timestamp("shipped_at", { withTimezone: true }),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
@@ -121,6 +124,7 @@ export const orders = pgTable(
   },
   (t) => [
     uniqueIndex("orders_order_number_key").on(t.orderNumber),
+    uniqueIndex("orders_stripe_payment_intent_key").on(t.stripePaymentIntentId),
     index("orders_user_idx").on(t.userId),
     index("orders_status_idx").on(t.status),
   ],

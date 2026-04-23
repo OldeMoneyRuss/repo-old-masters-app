@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
       shippingAddressId = addr.id;
     }
 
-    const [order] = await tx
+    const inserted = await tx
       .insert(orders)
       .values({
         orderNumber,
@@ -172,7 +172,19 @@ export async function POST(req: NextRequest) {
         stripePaymentIntentId: body.paymentIntentId,
         placedAt: new Date(),
       })
+      .onConflictDoNothing({ target: orders.stripePaymentIntentId })
       .returning({ id: orders.id, orderNumber: orders.orderNumber });
+
+    if (inserted.length === 0) {
+      // The webhook raced us to the insert. Return the order it created.
+      const [concurrent] = await tx
+        .select({ id: orders.id, orderNumber: orders.orderNumber })
+        .from(orders)
+        .where(eq(orders.stripePaymentIntentId, body.paymentIntentId))
+        .limit(1);
+      return { orderNumber: concurrent.orderNumber, items: [], deduped: true };
+    }
+    const order = inserted[0];
 
     await tx.insert(orderItems).values(
       cart.items.map((item) => ({
@@ -195,8 +207,12 @@ export async function POST(req: NextRequest) {
 
     await tx.delete(cartItems).where(eq(cartItems.cartId, cart.id));
 
-    return { orderNumber: order.orderNumber, items: cart.items };
+    return { orderNumber: order.orderNumber, items: cart.items, deduped: false };
   });
+
+  if (result.deduped) {
+    return NextResponse.json({ orderNumber: result.orderNumber });
+  }
 
   // Fire-and-forget; failing to email shouldn't fail the order.
   sendOrderConfirmationEmail(body.email, {

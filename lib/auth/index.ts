@@ -56,6 +56,14 @@ export async function requireAdmin() {
   return session;
 }
 
+export async function requireSuperAdmin() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "super_admin") {
+    throw new Response("Forbidden", { status: 403 });
+  }
+  return session;
+}
+
 export async function requireUser() {
   const session = await auth();
   if (!session?.user) {

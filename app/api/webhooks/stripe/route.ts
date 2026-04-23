@@ -36,15 +36,13 @@ export async function POST(req: NextRequest) {
     case "payment_intent.succeeded": {
       const intent = event.data.object as Stripe.PaymentIntent;
 
-      const [existing] = await db
-        .select({ id: orders.id })
-        .from(orders)
-        .where(eq(orders.stripePaymentIntentId, intent.id))
-        .limit(1);
-      if (existing) break;
-
       const cartId = intent.metadata?.cartId;
-      if (!cartId) break;
+      if (!cartId) {
+        console.error(
+          `[webhook] payment_intent.succeeded ${intent.id} missing cartId metadata`,
+        );
+        break;
+      }
 
       const cart = await getCartWithItems(cartId);
       if (!cart || cart.items.length === 0) break;
@@ -65,7 +63,7 @@ export async function POST(req: NextRequest) {
       await db.transaction(async (tx) => {
         const orderNumber = `WH-${Date.now().toString(36).toUpperCase()}`;
 
-        const [order] = await tx
+        const inserted = await tx
           .insert(orders)
           .values({
             orderNumber,
@@ -81,10 +79,17 @@ export async function POST(req: NextRequest) {
             stripePaymentIntentId: intent.id,
             placedAt: new Date(),
           })
+          .onConflictDoNothing({
+            target: orders.stripePaymentIntentId,
+          })
           .returning({
             id: orders.id,
             orderNumber: orders.orderNumber,
           });
+
+        // Another writer (e.g. /checkout/confirm) already created this order.
+        if (inserted.length === 0) return;
+        const order = inserted[0];
 
         await tx.insert(orderItems).values(
           cart.items.map((item) => ({

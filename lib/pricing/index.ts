@@ -46,7 +46,7 @@ export function unitPriceCents(
 ): number {
   const sizeMod = snap.sizeModifiers[input.printSize] ?? 0;
   const paperMod = snap.paperModifiers[input.paperType] ?? 0;
-  return snap.basePriceCents + sizeMod + paperMod;
+  return Math.max(0, snap.basePriceCents + sizeMod + paperMod);
 }
 
 export async function priceFor(input: PriceInput): Promise<number> {

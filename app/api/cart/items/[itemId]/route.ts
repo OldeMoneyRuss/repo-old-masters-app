@@ -7,6 +7,7 @@ import { cartItems } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import {
   CART_COOKIE_NAME,
+  extendCartExpiry,
   findActiveCart,
   getCartWithItems,
   type CartIdentity,
@@ -73,6 +74,7 @@ export async function PATCH(
     .set({ quantity: parsed.data.quantity, updatedAt: new Date() })
     .where(eq(cartItems.id, itemId));
 
+  await extendCartExpiry(cartId);
   const cart = await getCartWithItems(cartId);
   return NextResponse.json(cart);
 }
@@ -93,6 +95,7 @@ export async function DELETE(
 
   await db.delete(cartItems).where(eq(cartItems.id, itemId));
 
+  await extendCartExpiry(cartId);
   const cart = await getCartWithItems(cartId);
   return NextResponse.json(cart);
 }

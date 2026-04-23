@@ -3,12 +3,13 @@ import { cookies } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { cartItems, artworkSizeEligibility } from "@/db/schema";
+import { artworks, cartItems, artworkSizeEligibility } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getPricing, unitPriceCents } from "@/lib/pricing";
 import {
   CART_COOKIE_MAX_AGE_SECONDS,
   CART_COOKIE_NAME,
+  extendCartExpiry,
   generateGuestToken,
   getCartWithItems,
   getOrCreateCart,
@@ -36,6 +37,19 @@ export async function POST(req: NextRequest) {
     );
   }
   const { artworkId, printSize, paperType } = parsed.data;
+
+  const [artwork] = await db
+    .select({ publishStatus: artworks.publishStatus })
+    .from(artworks)
+    .where(eq(artworks.id, artworkId))
+    .limit(1);
+
+  if (!artwork || artwork.publishStatus !== "published") {
+    return NextResponse.json(
+      { error: "This artwork is not available for purchase." },
+      { status: 404 },
+    );
+  }
 
   const [eligibility] = await db
     .select({ eligible: artworkSizeEligibility.eligible })
@@ -105,6 +119,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  await extendCartExpiry(cartId);
   const cart = await getCartWithItems(cartId);
   const res = NextResponse.json(cart);
 
