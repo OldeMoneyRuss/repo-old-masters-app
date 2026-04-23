@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import { pricingConfig } from "@/db/schema/pricing";
 import {
@@ -10,30 +11,27 @@ import {
 export { unitPriceCents };
 export type { PriceInput, PricingSnapshot };
 
-let cached: { snap: PricingSnapshot; cachedAt: number } | null = null;
-const CACHE_TTL_MS = 60_000;
-
-export async function getPricing(): Promise<PricingSnapshot> {
-  if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
-    return cached.snap;
-  }
+async function _fetchPricing(): Promise<PricingSnapshot> {
   const [row] = await db
     .select()
     .from(pricingConfig)
     .where(eq(pricingConfig.id, 1))
     .limit(1);
-  const snap: PricingSnapshot = {
+  return {
     basePriceCents: row?.basePriceCents ?? 0,
     sizeModifiers: row?.sizeModifiers ?? {},
     paperModifiers: row?.paperModifiers ?? {},
     updatedAt: row?.updatedAt ?? new Date(0),
   };
-  cached = { snap, cachedAt: Date.now() };
-  return snap;
 }
 
+export const getPricing = unstable_cache(_fetchPricing, ["pricing"], {
+  tags: ["pricing"],
+  revalidate: 300,
+});
+
 export function invalidatePricingCache(): void {
-  cached = null;
+  revalidateTag("pricing");
 }
 
 export async function priceFor(input: PriceInput): Promise<number> {
