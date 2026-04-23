@@ -49,6 +49,7 @@ function thumbSrc(key: string | null): string | null {
   if (!key) return null;
   const base = process.env.NEXT_PUBLIC_CDN_BASE_URL?.replace(/\/$/, "");
   if (base) return `${base}/${key}`;
+  // fall back: assume key is already a relative path from the public bucket
   return `/${key}`;
 }
 
@@ -116,183 +117,179 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-[1080px] px-8 py-12">
-        <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-ink-light">
-          Loading…
-        </p>
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <h1 className="font-serif text-3xl tracking-tight text-zinc-900 dark:text-zinc-50">
+          Cart
+        </h1>
+        <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
+          <div className="space-y-4">
+            {[0, 1, 2].map((k) => (
+              <div
+                key={k}
+                className="flex gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                <div className="h-[60px] w-[60px] animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                  <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-64 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900" />
+        </div>
       </section>
     );
   }
 
   const isEmpty = !cart || cart.items.length === 0;
 
-  if (isEmpty) {
-    return (
-      <section className="mx-auto max-w-[700px] px-8 py-20 text-center">
-        <div className="mb-4 font-display text-[56px] text-[color:var(--border-light)]">
-          ∅
-        </div>
-        <h1 className="mb-3 font-display text-[36px] text-ink">Your cart is empty</h1>
-        <p className="mb-8 font-serif text-lg text-ink-light">
-          Browse the collection and add a print to begin.
-        </p>
-        <Link
-          href="/catalog"
-          className="inline-block bg-venetian px-8 py-3.5 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark"
-        >
-          Browse the Collection
-        </Link>
-      </section>
-    );
-  }
-
   return (
-    <section className="mx-auto max-w-[1080px] px-8 pb-20 pt-12">
-      <p className="mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-ink-light">
-        Your Selection
-      </p>
-      <h1 className="mb-10 font-display text-[48px] font-normal text-ink">Cart</h1>
+    <section className="mx-auto max-w-6xl px-6 py-12">
+      <h1 className="font-serif text-3xl tracking-tight text-zinc-900 dark:text-zinc-50">
+        Cart
+      </h1>
 
       {error && (
-        <p className="mb-6 border border-venetian bg-cream px-4 py-3 font-serif text-sm text-venetian">
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {error}
         </p>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-        <ul className="flex flex-col gap-4">
-          {cart!.items.map((item) => {
-            const busy = pendingId === item.id;
-            const src = thumbSrc(item.thumbKey);
-            return (
-              <li
-                key={item.id}
-                className="flex gap-5 border border-[color:var(--border-light)] bg-cream p-5"
-              >
-                <Link
-                  href={`/catalog/${item.artworkSlug}`}
-                  className="flex h-[100px] w-20 shrink-0 items-center justify-center overflow-hidden bg-[color:var(--parchment-mid)]"
+      {isEmpty ? (
+        <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-10 text-center dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Your cart is empty.{" "}
+            <Link
+              href="/catalog"
+              className="text-zinc-900 underline underline-offset-4 hover:no-underline dark:text-zinc-100"
+            >
+              Browse the catalog &rarr;
+            </Link>
+          </p>
+        </div>
+      ) : (
+        <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
+          <ul className="space-y-4">
+            {cart!.items.map((item) => {
+              const busy = pendingId === item.id;
+              const src = thumbSrc(item.thumbKey);
+              return (
+                <li
+                  key={item.id}
+                  className="flex gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
                 >
-                  {src ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={src}
-                      alt={item.artworkTitle}
-                      className="h-full w-full object-contain p-1"
-                    />
-                  ) : null}
-                </Link>
-                <div className="flex flex-1 flex-col">
-                  <Link
-                    href={`/catalog/${item.artworkSlug}`}
-                    className="mb-1 font-display text-[20px] leading-[1.2] text-ink hover:text-venetian"
-                  >
-                    {item.artworkTitle}
-                  </Link>
-                  {item.artistName && (
-                    <p className="mb-2 font-sans text-[11px] uppercase tracking-[0.08em] text-ink-light">
-                      {item.artistName}
+                  <div className="h-[60px] w-[60px] shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-900">
+                    {src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={src}
+                        alt={item.artworkTitle}
+                        width={60}
+                        height={60}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Link
+                      href={`/catalog/${item.artworkSlug}`}
+                      className="font-serif text-base text-zinc-900 hover:underline dark:text-zinc-50"
+                    >
+                      {item.artworkTitle}
+                    </Link>
+                    {item.artistName && (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {item.artistName}
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                      {formatPrintSize(item.printSize)} &middot;{" "}
+                      {formatPaper(item.paperType)}
                     </p>
-                  )}
-                  <p className="font-serif text-[15px] text-ink-mid">
-                    {formatPrintSize(item.printSize)} · {formatPaper(item.paperType)}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="flex items-center border border-[color:var(--border)]">
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-800">
+                        <button
+                          type="button"
+                          aria-label="Decrease quantity"
+                          disabled={busy || item.quantity <= 1}
+                          onClick={() => updateQty(item.id, item.quantity - 1)}
+                          className="flex h-8 w-8 items-center justify-center rounded-l-full text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          &minus;
+                        </button>
+                        <span className="min-w-8 px-2 text-center text-sm tabular-nums text-zinc-900 dark:text-zinc-100">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Increase quantity"
+                          disabled={busy || item.quantity >= 10}
+                          onClick={() => updateQty(item.id, item.quantity + 1)}
+                          className="flex h-8 w-8 items-center justify-center rounded-r-full text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        aria-label="Decrease quantity"
-                        disabled={busy || item.quantity <= 1}
-                        onClick={() => updateQty(item.id, item.quantity - 1)}
-                        className="flex h-8 w-8 items-center justify-center text-lg text-ink-mid disabled:opacity-30"
+                        aria-label={`Remove ${item.artworkTitle}`}
+                        disabled={busy}
+                        onClick={() => removeItem(item.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
                       >
-                        −
-                      </button>
-                      <span className="min-w-7 text-center font-sans text-[13px] text-ink">
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label="Increase quantity"
-                        disabled={busy || item.quantity >= 10}
-                        onClick={() => updateQty(item.id, item.quantity + 1)}
-                        className="flex h-8 w-8 items-center justify-center text-lg text-ink-mid disabled:opacity-30"
-                      >
-                        +
+                        &times;
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => removeItem(item.id)}
-                      className="font-sans text-[11px] uppercase tracking-[0.08em] text-ink-light underline disabled:opacity-30"
-                    >
-                      Remove
-                    </button>
                   </div>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-display text-2xl text-ink tabular-nums">
+                  <div className="text-right text-sm tabular-nums text-zinc-900 dark:text-zinc-100">
                     {formatUsd(item.lineTotalCents)}
-                  </p>
-                  {item.quantity > 1 && (
-                    <p className="font-sans text-[11px] text-ink-light">
-                      {formatUsd(item.unitPriceCents)} each
-                    </p>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
 
-        <aside className="sticky top-20 border border-[color:var(--border-light)] bg-cream p-7">
-          <h2 className="mb-5 font-display text-[24px] text-ink">Order Summary</h2>
-          <dl className="mb-5 flex flex-col gap-2.5">
-            <div className="flex justify-between">
-              <dt className="font-serif text-base text-ink-mid">Subtotal</dt>
-              <dd className="font-display text-xl text-ink tabular-nums">
-                {formatUsd(cart!.subtotalCents)}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="font-serif text-[15px] text-ink-light">Shipping</dt>
-              <dd className="font-serif text-[15px] text-ink-light">
-                Calculated at checkout
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="font-serif text-[15px] text-ink-light">Tax</dt>
-              <dd className="font-serif text-[15px] text-ink-light">
-                Calculated at checkout
-              </dd>
-            </div>
-            <div className="flex justify-between border-t border-[color:var(--border-light)] pt-3">
-              <dt className="font-sans text-xs uppercase tracking-[0.1em] text-ink">
-                Estimated Total
-              </dt>
-              <dd className="font-display text-[26px] text-ink tabular-nums">
-                {formatUsd(cart!.subtotalCents)}
-              </dd>
-            </div>
-          </dl>
-          <Link
-            href="/checkout"
-            className="block w-full bg-venetian px-6 py-3.5 text-center font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark"
-          >
-            Proceed to Checkout
-          </Link>
-          <Link
-            href="/catalog"
-            className="mt-3 block text-center font-sans text-[11px] uppercase tracking-[0.1em] text-ink-light hover:text-ink"
-          >
-            ← Continue browsing
-          </Link>
-          <p className="mt-4 text-center font-serif text-sm leading-relaxed text-ink-light">
-            Production 3–5 business days. Shipped flat with rigid board backing.
-          </p>
-        </aside>
-      </div>
+          <aside className="h-fit rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="font-serif text-lg text-zinc-900 dark:text-zinc-50">
+              Order Summary
+            </h2>
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between text-zinc-700 dark:text-zinc-300">
+                <dt>Subtotal</dt>
+                <dd className="tabular-nums">
+                  {formatUsd(cart!.subtotalCents)}
+                </dd>
+              </div>
+              <div className="flex justify-between text-zinc-500 dark:text-zinc-500">
+                <dt>Shipping</dt>
+                <dd>Calculated at checkout</dd>
+              </div>
+              <div className="flex justify-between text-zinc-500 dark:text-zinc-500">
+                <dt>Tax</dt>
+                <dd>Calculated at checkout</dd>
+              </div>
+              <div className="mt-3 flex justify-between border-t border-zinc-200 pt-3 text-base font-medium text-zinc-900 dark:border-zinc-800 dark:text-zinc-50">
+                <dt>Total</dt>
+                <dd className="tabular-nums">
+                  {formatUsd(cart!.subtotalCents)}
+                </dd>
+              </div>
+            </dl>
+            <Link
+              href="/checkout"
+              aria-disabled={isEmpty}
+              className={`mt-6 flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
+                isEmpty
+                  ? "pointer-events-none bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500"
+                  : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+              }`}
+            >
+              Proceed to Checkout
+            </Link>
+          </aside>
+        </div>
+      )}
     </section>
   );
 }

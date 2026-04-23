@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { orders, orderItems, carts, cartItems } from "@/db/schema";
 import { getCartWithItems } from "@/lib/cart";
 import { sendCancellationEmail } from "@/lib/email";
-import { sendPurchaseEvent } from "@/lib/analytics/ga-server";
 
 export const dynamic = "force-dynamic";
 
@@ -91,17 +90,6 @@ export async function POST(req: NextRequest) {
         // Another writer (e.g. /checkout/confirm) already created this order.
         if (inserted.length === 0) return;
         const order = inserted[0];
-
-        sendPurchaseEvent({
-          transactionId: intent.id,
-          valueCents: intent.amount,
-          items: cart.items.map((i) => ({
-            itemId: i.artworkId,
-            itemName: i.artworkTitle,
-            price: i.unitPriceCents / 100,
-            quantity: i.quantity,
-          })),
-        }).catch(console.error);
 
         await tx.insert(orderItems).values(
           cart.items.map((item) => ({

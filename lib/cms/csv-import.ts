@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { artworks, artists, movements, museums } from "@/db/schema";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "./slug";
 import { logAdminAction } from "./audit";
@@ -203,8 +202,5 @@ export async function runCsvImportAction(formData: FormData): Promise<ImportRepo
   });
 
   report.ok = report.errors.length === 0;
-  revalidatePath("/");
-  revalidatePath("/catalog");
-  revalidateTag("artworks", "max");
   return report;
 }

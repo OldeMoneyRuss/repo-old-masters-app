@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
@@ -152,10 +152,6 @@ export async function upsertArtworkAction(formData: FormData) {
   }
 
   revalidatePath("/admin/artworks");
-  revalidatePath("/");
-  revalidatePath("/catalog");
-  revalidateTag("artworks", "max");
-  revalidateTag(`artwork:${slug}`, "max");
   redirect(`/admin/artworks/${artworkId}?saved=1`);
 }
 
@@ -171,9 +167,6 @@ export async function deleteArtworkAction(formData: FormData) {
     entityId: id,
   });
   revalidatePath("/admin/artworks");
-  revalidatePath("/");
-  revalidatePath("/catalog");
-  revalidateTag("artworks", "max");
   redirect("/admin/artworks?deleted=1");
 }
 
