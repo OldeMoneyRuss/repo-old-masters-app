@@ -154,8 +154,8 @@ export async function upsertArtworkAction(formData: FormData) {
   revalidatePath("/admin/artworks");
   revalidatePath("/");
   revalidatePath("/catalog");
-  revalidateTag("artworks");
-  revalidateTag(`artwork:${slug}`);
+  revalidateTag("artworks", "max");
+  revalidateTag(`artwork:${slug}`, "max");
   redirect(`/admin/artworks/${artworkId}?saved=1`);
 }
 
@@ -173,7 +173,7 @@ export async function deleteArtworkAction(formData: FormData) {
   revalidatePath("/admin/artworks");
   revalidatePath("/");
   revalidatePath("/catalog");
-  revalidateTag("artworks");
+  revalidateTag("artworks", "max");
   redirect("/admin/artworks?deleted=1");
 }
 

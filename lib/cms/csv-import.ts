@@ -205,6 +205,6 @@ export async function runCsvImportAction(formData: FormData): Promise<ImportRepo
   report.ok = report.errors.length === 0;
   revalidatePath("/");
   revalidatePath("/catalog");
-  revalidateTag("artworks");
+  revalidateTag("artworks", "max");
   return report;
 }

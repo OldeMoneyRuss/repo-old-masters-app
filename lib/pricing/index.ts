@@ -31,7 +31,7 @@ export const getPricing = unstable_cache(_fetchPricing, ["pricing"], {
 });
 
 export function invalidatePricingCache(): void {
-  revalidateTag("pricing");
+  revalidateTag("pricing", "max");
 }
 
 export async function priceFor(input: PriceInput): Promise<number> {
