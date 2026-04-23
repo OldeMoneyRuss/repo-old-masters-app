@@ -4,6 +4,8 @@ import { asc, desc, eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { artworks, artists, movements, assets } from "@/db/schema";
 import { publicUrl } from "@/lib/storage";
+import { Ornament } from "@/components/storefront/Ornament";
+import { NewsletterForm } from "@/components/storefront/NewsletterForm";
 
 export const revalidate = 60;
 
@@ -13,8 +15,6 @@ type FeaturedArtwork = {
   title: string;
   artistName: string | null;
   catalogKey: string | null;
-  catalogWidth: number | null;
-  catalogHeight: number | null;
 };
 
 type ArtistOption = { slug: string; name: string };
@@ -33,8 +33,6 @@ async function getFeaturedArtworks(): Promise<FeaturedArtwork[]> {
         title: artworks.title,
         artistName: artists.name,
         catalogKey: assets.key,
-        catalogWidth: assets.widthPx,
-        catalogHeight: assets.heightPx,
       })
       .from(artworks)
       .leftJoin(artists, eq(artists.id, artworks.artistId))
@@ -79,302 +77,287 @@ async function getBrowseData(): Promise<{
   }
 }
 
+const sectionLabel =
+  "mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-ink-light";
+
+const browseColHead =
+  "mb-4 border-b border-[color:var(--border)] pb-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-light";
+
+const browseLink =
+  "block mb-1.5 font-serif text-base leading-snug text-ink hover:text-venetian transition-colors";
+
+const trustItems = [
+  {
+    icon: "◈",
+    title: "Archival giclée printing",
+    body: "Pigment inks rated for 100+ years, printed on museum-grade papers including cotton rag and baryta.",
+  },
+  {
+    icon: "◉",
+    title: "Rights-cleared originals",
+    body: "Every artwork verified public-domain or rights-cleared before it reaches the shop.",
+  },
+  {
+    icon: "◫",
+    title: "Six print sizes",
+    body: "8×10 through 30×40 inches. Every artwork fitted to preserve the original aspect ratio.",
+  },
+  {
+    icon: "◎",
+    title: "Produced in-house",
+    body: "Each print made to order and shipped flat-packed with rigid board backing.",
+  },
+];
+
+const eras: Array<[string, string]> = [
+  ["Medieval", "500–1400"],
+  ["Renaissance", "1400–1600"],
+  ["Baroque", "1600–1750"],
+  ["Romanticism", "1780–1850"],
+  ["Realism", "1840–1880"],
+];
+
+const subjects = ["Portrait", "Mythology", "Religious", "Architecture", "Landscape", "Interior"];
+
 export default async function HomePage() {
   const [featured, { artistList, movementList }] = await Promise.all([
     getFeaturedArtworks(),
     getBrowseData(),
   ]);
 
-  const heroArtwork = featured[0] ?? null;
+  const heroArt = featured[0] ?? null;
+  const featuredGrid = featured.slice(0, 8);
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-zinc-950">
-        <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-10 px-6 py-20 md:flex-row md:py-28 lg:py-36">
-          <div className="flex-1 text-center md:text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-400">
-              Museum-quality giclée prints
-            </p>
-            <h1 className="mt-5 font-serif text-4xl leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              The Old Masters,<br />
-              reproduced with<br />
-              uncompromising fidelity.
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <section className="overflow-hidden border-b border-[color:var(--border)] bg-[linear-gradient(160deg,#F5EAD0_0%,#EDE0BE_100%)]">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-16 px-8 py-20">
+          <div className="min-w-[280px] flex-[1_1_380px]">
+            <p className={sectionLabel}>Museum-quality giclée prints</p>
+            <h1 className="mb-6 font-display text-[clamp(40px,6vw,72px)] font-normal leading-[1.08] tracking-tight text-ink">
+              The Old Masters,
+              <br />
+              <em className="not-italic font-display italic text-venetian">reproduced</em>
+              <br />
+              with fidelity.
             </h1>
-            <p className="mt-6 max-w-prose text-lg text-zinc-400">
-              Public-domain and rights-cleared masterpieces, printed on archival
-              papers with museum-grade pigment inks. Shipped worldwide.
+            <p className="mb-9 max-w-[420px] font-serif text-[19px] leading-[1.65] text-ink-mid">
+              Public-domain masterpieces — from Botticelli to Vermeer — printed on
+              archival papers with museum-grade pigment inks.
             </p>
-            <div className="mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
+            <div className="flex flex-wrap gap-3.5">
               <Link
                 href="/catalog"
-                className="rounded-full bg-amber-500 px-8 py-3.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-400"
+                className="bg-venetian px-8 py-3.5 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark"
               >
                 Browse the Collection
               </Link>
               <Link
-                href="/about"
-                className="rounded-full border border-zinc-700 px-8 py-3.5 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
+                href="/catalog?movement=italian-renaissance"
+                className="border border-lapis px-8 py-3.5 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-lapis transition-colors hover:bg-lapis hover:text-cream"
               >
-                About the Shop
+                Italian Renaissance
               </Link>
             </div>
+            <p className="mt-8 border-t border-[color:var(--border-light)] pt-4 font-sans text-[11px] tracking-[0.08em] text-ink-light">
+              SOURCED FROM: UFFIZI · LOUVRE · RIJKSMUSEUM · PRADO · NATIONAL GALLERY
+            </p>
           </div>
 
-          {/* Hero image */}
-          <div className="relative w-full max-w-sm flex-shrink-0 md:max-w-xs lg:max-w-sm">
-            <div className="aspect-[3/4] overflow-hidden rounded-lg shadow-2xl">
-              {heroArtwork?.catalogKey ? (
-                <Image
-                  src={publicUrl(heroArtwork.catalogKey)}
-                  alt={heroArtwork.title}
-                  fill
-                  sizes="(min-width: 768px) 320px, 100vw"
-                  className="object-contain"
-                  priority
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-zinc-800 text-zinc-500 text-sm">
-                  Featured artwork
-                </div>
-              )}
+          {/* Hero painting — framed */}
+          <div className="relative flex flex-[1_1_280px] justify-center">
+            <div
+              className="relative w-full max-w-[320px] border-[14px] border-[#EDE5CE]"
+              style={{
+                transform: "rotate(-1.8deg)",
+                boxShadow: "6px 6px 0 #C9B07A, 0 24px 64px rgba(40,20,0,0.22)",
+              }}
+            >
+              <div className="relative aspect-[2.85/2] w-full bg-[color:var(--parchment-mid)]">
+                {heroArt?.catalogKey ? (
+                  <Image
+                    src={publicUrl(heroArt.catalogKey)}
+                    alt={heroArt.title}
+                    fill
+                    sizes="(min-width: 768px) 320px, 100vw"
+                    className="object-cover object-top"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center font-sans text-xs text-ink-light">
+                    Featured artwork
+                  </div>
+                )}
+              </div>
             </div>
-            {heroArtwork && (
-              <p className="mt-3 text-center text-xs text-zinc-500">
-                {heroArtwork.title}
-                {heroArtwork.artistName && ` — ${heroArtwork.artistName}`}
-              </p>
+            {heroArt && (
+              <div className="absolute -bottom-3 right-5 bg-ink px-3.5 py-1.5 font-sans text-[10px] uppercase tracking-[0.15em] text-parchment">
+                {heroArt.title}
+                {heroArt.artistName && ` · ${heroArt.artistName}`}
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* ── Featured artworks ────────────────────────────────────── */}
-      {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-serif text-3xl tracking-tight text-zinc-900 dark:text-zinc-50">
-              Featured works
-            </h2>
+      {/* ── Featured works ──────────────────────────────────── */}
+      {featuredGrid.length > 0 && (
+        <section className="mx-auto max-w-[1180px] px-8 pb-4 pt-16">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className={sectionLabel}>Curated selection</p>
+              <h2 className="font-display text-[36px] font-normal tracking-tight text-ink">
+                Featured works
+              </h2>
+            </div>
             <Link
               href="/catalog"
-              className="text-sm text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+              className="border-b border-lapis pb-0.5 font-sans text-xs uppercase tracking-[0.12em] text-lapis"
             >
-              View all →
+              View all works →
             </Link>
           </div>
           <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {featured.map((art) => (
+            {featuredGrid.map((art) => (
               <li key={art.id}>
                 <Link href={`/catalog/${art.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded bg-zinc-100 dark:bg-zinc-900">
+                  <div className="relative aspect-[3/4] overflow-hidden border border-[color:var(--border-light)] bg-[color:var(--parchment-mid)] shadow-[0_2px_8px_rgba(40,20,0,0.06)] transition-all duration-200 group-hover:border-gold group-hover:shadow-[0_8px_32px_rgba(40,20,0,0.14)]">
                     {art.catalogKey ? (
                       <Image
                         src={publicUrl(art.catalogKey)}
                         alt={art.title}
                         fill
                         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                        className="object-contain transition duration-200 group-hover:scale-[1.02]"
+                        className="object-contain p-3 transition-transform duration-[400ms] ease-out group-hover:scale-[1.04]"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                        No image
+                      <div className="flex h-full items-center justify-center font-sans text-xs text-ink-light">
+                        artwork image
                       </div>
                     )}
                   </div>
-                  <p className="mt-2 font-serif text-sm leading-snug text-zinc-900 group-hover:underline dark:text-zinc-50">
+                  <p className="mt-2.5 font-display text-[17px] font-medium leading-[1.25] text-ink transition-colors group-hover:text-venetian">
                     {art.title}
                   </p>
-                  <p className="text-xs text-zinc-500">{art.artistName ?? "Unknown artist"}</p>
+                  <p className="font-sans text-[11px] uppercase tracking-[0.1em] text-ink-light">
+                    {art.artistName ?? "Unknown artist"}
+                  </p>
                 </Link>
               </li>
             ))}
           </ul>
+          <Ornament className="mt-14" />
         </section>
       )}
 
-      {/* ── Browse by facet ──────────────────────────────────────── */}
-      <section className="border-y border-zinc-200 bg-zinc-50 py-16 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-10 font-serif text-3xl tracking-tight text-zinc-900 dark:text-zinc-50">
-            Browse the collection
-          </h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* By Artist */}
+      {/* ── Browse by Facet ─────────────────────────────────── */}
+      <section className="border-y border-[color:var(--border)] bg-[#EDE0BE]">
+        <div className="mx-auto max-w-[1180px] px-8 py-16">
+          <div className="mb-12 text-center">
+            <p className="mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-gold">
+              Explore the Catalogue
+            </p>
+            <h2 className="font-display text-[38px] font-normal text-ink">
+              Browse the collection
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                By Artist
-              </h3>
-              <ul className="space-y-1.5">
-                {artistList.map((a) => (
-                  <li key={a.slug}>
-                    <Link
-                      href={`/catalog?artist=${a.slug}`}
-                      className="text-sm text-zinc-700 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
-                    >
-                      {a.name}
-                    </Link>
-                  </li>
-                ))}
-                {artistList.length === 0 && (
-                  <li className="text-sm text-zinc-400">Coming soon</li>
-                )}
-              </ul>
+              <p className={browseColHead}>By Artist</p>
+              {artistList.length === 0 ? (
+                <p className="font-serif text-sm text-ink-light">Coming soon</p>
+              ) : (
+                artistList.slice(0, 7).map((a) => (
+                  <Link key={a.slug} href={`/catalog?artist=${a.slug}`} className={browseLink}>
+                    {a.name}
+                  </Link>
+                ))
+              )}
               {artistList.length > 0 && (
                 <Link
                   href="/artists"
-                  className="mt-3 block text-xs text-amber-600 hover:underline dark:text-amber-400"
+                  className="mt-2 block font-sans text-[11px] uppercase tracking-[0.08em] text-gold"
                 >
                   All artists →
                 </Link>
               )}
             </div>
-
-            {/* By Movement */}
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                By Movement
-              </h3>
-              <ul className="space-y-1.5">
-                {movementList.map((m) => (
-                  <li key={m.slug}>
-                    <Link
-                      href={`/catalog?movement=${m.slug}`}
-                      className="text-sm text-zinc-700 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
-                    >
-                      {m.name}
-                      {m.dateRangeLabel && (
-                        <span className="ml-1 text-zinc-400">
-                          ({m.dateRangeLabel})
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-                {movementList.length === 0 && (
-                  <li className="text-sm text-zinc-400">Coming soon</li>
-                )}
-              </ul>
-              {movementList.length > 0 && (
-                <Link
-                  href="/movements"
-                  className="mt-3 block text-xs text-amber-600 hover:underline dark:text-amber-400"
-                >
-                  All movements →
-                </Link>
+              <p className={browseColHead}>By Movement</p>
+              {movementList.length === 0 ? (
+                <p className="font-serif text-sm text-ink-light">Coming soon</p>
+              ) : (
+                movementList.map((m) => (
+                  <Link key={m.slug} href={`/catalog?movement=${m.slug}`} className={browseLink}>
+                    {m.name}
+                    {m.dateRangeLabel && (
+                      <span className="text-sm text-ink-light"> ({m.dateRangeLabel})</span>
+                    )}
+                  </Link>
+                ))
               )}
             </div>
-
-            {/* By Era */}
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                By Era
-              </h3>
-              <ul className="space-y-1.5">
-                {[
-                  { label: "Medieval (500–1400)", q: "medieval" },
-                  { label: "Renaissance (1400–1600)", q: "renaissance" },
-                  { label: "Baroque (1600–1750)", q: "baroque" },
-                  { label: "Romanticism (1800–1850)", q: "romanticism" },
-                  { label: "Impressionism (1860–1900)", q: "impressionism" },
-                ].map((era) => (
-                  <li key={era.q}>
-                    <Link
-                      href={`/catalog?q=${era.q}`}
-                      className="text-sm text-zinc-700 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
-                    >
-                      {era.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <p className={browseColHead}>By Era</p>
+              {eras.map(([era, dates]) => (
+                <Link key={era} href={`/catalog?q=${era.toLowerCase()}`} className={browseLink}>
+                  {era} <span className="text-sm text-ink-light">({dates})</span>
+                </Link>
+              ))}
             </div>
-
-            {/* By Orientation */}
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                By Format
-              </h3>
-              <ul className="space-y-1.5">
-                {[
-                  { label: "Portrait", value: "portrait" },
-                  { label: "Landscape", value: "landscape" },
-                  { label: "Square", value: "square" },
-                ].map((o) => (
-                  <li key={o.value}>
-                    <Link
-                      href={`/catalog?orientation=${o.value}`}
-                      className="text-sm text-zinc-700 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
-                    >
-                      {o.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-5">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                  Print Sizes
-                </h3>
-                <ul className="space-y-1.5">
-                  {["8×10", "11×14", "16×20", "18×24", "24×36", "30×40"].map(
-                    (s) => (
-                      <li
-                        key={s}
-                        className="text-sm text-zinc-700 dark:text-zinc-300"
-                      >
-                        {s}&Prime;
-                      </li>
-                    ),
-                  )}
-                </ul>
-              </div>
+              <p className={browseColHead}>By Subject</p>
+              {subjects.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/catalog?q=${tag.toLowerCase()}`}
+                  className={browseLink}
+                >
+                  {tag}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Trust signals ────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="sr-only">Why Old Masters Print Shop</h2>
+      {/* ── Trust signals ───────────────────────────────────── */}
+      <section className="mx-auto max-w-[1180px] px-8 py-20">
+        <div className="mb-12 text-center">
+          <p className={sectionLabel}>Why Old Masters Print Shop</p>
+          <h2 className="font-display text-[38px] font-normal text-ink">
+            Craftsmanship in every print
+          </h2>
+        </div>
         <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              icon: "🖨",
-              title: "Archival giclée printing",
-              body: "Pigment inks rated for 100+ years on museum-grade papers including cotton rag and baryta.",
-            },
-            {
-              icon: "✅",
-              title: "Rights-cleared originals",
-              body: "Every artwork verified public-domain or rights-cleared before it reaches the shop.",
-            },
-            {
-              icon: "📐",
-              title: "Six print sizes",
-              body: "8×10 through 30×40 inches. Every artwork fitted to preserve the original aspect ratio.",
-            },
-            {
-              icon: "🚚",
-              title: "Worldwide shipping",
-              body: "Flat-packed with rigid backing. Standard and expedited options at checkout.",
-            },
-          ].map((item) => (
+          {trustItems.map((item) => (
             <li
               key={item.title}
-              className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
+              className="border border-[color:var(--border-light)] bg-cream px-7 py-9 text-center"
             >
-              <span className="text-3xl" role="img" aria-hidden>
-                {item.icon}
-              </span>
-              <h3 className="font-serif text-lg text-zinc-900 dark:text-zinc-50">
+              <div className="mb-4 font-display text-[28px] text-gold">{item.icon}</div>
+              <h3 className="mb-2.5 font-display text-[21px] font-medium text-ink">
                 {item.title}
               </h3>
-              <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                {item.body}
-              </p>
+              <p className="font-serif text-[15px] leading-[1.65] text-ink-mid">{item.body}</p>
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* ── Newsletter ──────────────────────────────────────── */}
+      <section className="bg-ink px-8 py-16 text-center">
+        <p className="mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-gold">
+          New Arrivals & Updates
+        </p>
+        <h2 className="mb-3 font-display text-[36px] font-normal text-parchment">
+          Join the collection
+        </h2>
+        <p className="mx-auto mb-8 max-w-[440px] font-serif text-[17px] text-ink-light">
+          New artworks added regularly. Be the first to know.
+        </p>
+        <NewsletterForm />
       </section>
     </>
   );
