@@ -48,6 +48,12 @@ type IntentData = {
   totalCents: number;
 };
 
+const labelClass =
+  "mb-1.5 block font-sans text-[10px] font-medium uppercase tracking-[0.15em] text-ink-light";
+
+const inputClass =
+  "w-full border border-[color:var(--border)] bg-cream px-3.5 py-2.5 font-serif text-base text-ink outline-none focus:border-lapis";
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -64,9 +70,9 @@ export default function CheckoutPage() {
     country: "US",
     phone: "",
   });
-  const [shippingMethod, setShippingMethod] = useState<
-    "standard" | "expedited"
-  >("standard");
+  const [shippingMethod, setShippingMethod] = useState<"standard" | "expedited">(
+    "standard",
+  );
   const [intentData, setIntentData] = useState<IntentData | null>(null);
   const [processing, setProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -89,8 +95,7 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const shippingCostPreview =
-    shippingMethod === "standard" ? 999 : 2499;
+  const shippingCostPreview = shippingMethod === "standard" ? 999 : 2499;
   const totalPreview = (cart?.subtotalCents ?? 0) + shippingCostPreview;
 
   function step1Valid() {
@@ -135,8 +140,8 @@ export default function CheckoutPage() {
 
   if (loadingCart) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-12">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <section className="mx-auto max-w-[1080px] px-8 py-12">
+        <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-ink-light">
           Loading checkout…
         </p>
       </section>
@@ -145,301 +150,247 @@ export default function CheckoutPage() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="font-serif text-3xl text-zinc-900 dark:text-zinc-50">
-          Your cart is empty
-        </h1>
-        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+      <section className="mx-auto max-w-[700px] px-8 py-20 text-center">
+        <h1 className="mb-3 font-display text-[36px] text-ink">Your cart is empty</h1>
+        <p className="mb-8 font-serif text-lg text-ink-light">
           Browse the catalog to find prints to add.
         </p>
         <Link
           href="/catalog"
-          className="mt-6 inline-flex rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white dark:bg-zinc-50 dark:text-zinc-900"
+          className="inline-block bg-venetian px-8 py-3.5 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark"
         >
-          Browse catalog
+          Browse Catalog
         </Link>
       </section>
     );
   }
 
-  return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="font-serif text-3xl text-zinc-900 dark:text-zinc-50">
-        Checkout
-      </h1>
+  const steps = [
+    { n: 1, label: "Shipping" },
+    { n: 2, label: "Method" },
+    { n: 3, label: "Payment" },
+  ];
 
-      <ol className="mt-8 flex items-center gap-4 text-sm">
-        {[
-          { n: 1, label: "Shipping" },
-          { n: 2, label: "Method" },
-          { n: 3, label: "Payment" },
-        ].map((s, i) => {
+  return (
+    <section className="mx-auto max-w-[1080px] px-8 pb-20 pt-12">
+      <p className="mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-ink-light">
+        Secure Checkout
+      </p>
+      <h1 className="mb-8 font-display text-[44px] font-normal text-ink">Checkout</h1>
+
+      <div className="mb-10 flex flex-wrap items-center gap-1">
+        {steps.map((s, i) => {
           const active = step === s.n;
           const done = step > s.n;
           return (
-            <li key={s.n} className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium ${
-                    active
-                      ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-                      : done
-                        ? "border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                        : "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-500"
-                  }`}
-                >
-                  {s.n}
-                </span>
-                <span
-                  className={
-                    active
-                      ? "text-zinc-900 dark:text-zinc-50"
-                      : "text-zinc-500 dark:text-zinc-500"
-                  }
-                >
-                  {s.label}
-                </span>
-              </div>
-              {i < 2 && (
-                <span className="h-px w-10 bg-zinc-200 dark:bg-zinc-800" />
+            <div key={s.n} className="flex items-center gap-2">
+              <span
+                className={[
+                  "font-sans text-[11px] uppercase tracking-[0.1em]",
+                  active
+                    ? "font-semibold text-ink"
+                    : done
+                      ? "text-gold"
+                      : "text-[color:var(--border)]",
+                ].join(" ")}
+              >
+                {done ? "✓ " : ""}
+                {s.label}
+              </span>
+              {i < steps.length - 1 && (
+                <span className="px-2 text-xs text-[color:var(--border)]">›</span>
               )}
-            </li>
+            </div>
           );
         })}
-      </ol>
+      </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,1fr)]">
+        <div>
           {step === 1 && (
-            <div className="space-y-6">
-              <h2 className="font-serif text-xl text-zinc-900 dark:text-zinc-50">
-                Contact &amp; Shipping
+            <div>
+              <h2 className="mb-6 font-display text-[28px] text-ink">
+                Delivery details
               </h2>
-
-              <div>
-                <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                  Full name
-                </label>
-                <input
-                  type="text"
-                  value={address.fullName}
-                  onChange={(e) =>
-                    setAddress({ ...address, fullName: e.target.value })
-                  }
-                  className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                  Address line 1
-                </label>
-                <input
-                  type="text"
-                  value={address.line1}
-                  onChange={(e) =>
-                    setAddress({ ...address, line1: e.target.value })
-                  }
-                  className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                  Address line 2{" "}
-                  <span className="text-zinc-500">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={address.line2}
-                  onChange={(e) =>
-                    setAddress({ ...address, line2: e.target.value })
-                  }
-                  className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                    City
-                  </label>
+                  <label className={labelClass}>Email address</label>
                   <input
-                    type="text"
-                    value={address.city}
-                    onChange={(e) =>
-                      setAddress({ ...address, city: e.target.value })
-                    }
-                    className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                    State / Region
-                  </label>
+                  <label className={labelClass}>Full name</label>
                   <input
                     type="text"
-                    value={address.region}
+                    value={address.fullName}
                     onChange={(e) =>
-                      setAddress({ ...address, region: e.target.value })
+                      setAddress({ ...address, fullName: e.target.value })
                     }
-                    className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                    Postal code
-                  </label>
+                  <label className={labelClass}>Street address</label>
                   <input
                     type="text"
-                    value={address.postalCode}
+                    value={address.line1}
                     onChange={(e) =>
-                      setAddress({ ...address, postalCode: e.target.value })
+                      setAddress({ ...address, line1: e.target.value })
                     }
-                    className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    placeholder="123 Main Street"
+                    className={inputClass}
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">
-                  Phone <span className="text-zinc-500">(optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={address.phone}
-                  onChange={(e) =>
-                    setAddress({ ...address, phone: e.target.value })
-                  }
-                  className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                />
-              </div>
-
-              <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                Country: United States (US). Other destinations coming soon.
-              </p>
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  disabled={!step1Valid()}
-                  onClick={() => setStep(2)}
-                  className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900"
-                >
-                  Continue to shipping method
-                </button>
+                <div>
+                  <label className={labelClass}>Apt / Suite (optional)</label>
+                  <input
+                    type="text"
+                    value={address.line2}
+                    onChange={(e) =>
+                      setAddress({ ...address, line2: e.target.value })
+                    }
+                    className={inputClass}
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1.2fr]">
+                  <div>
+                    <label className={labelClass}>City</label>
+                    <input
+                      type="text"
+                      value={address.city}
+                      onChange={(e) =>
+                        setAddress({ ...address, city: e.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>State</label>
+                    <input
+                      type="text"
+                      value={address.region}
+                      onChange={(e) =>
+                        setAddress({ ...address, region: e.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>ZIP code</label>
+                    <input
+                      type="text"
+                      value={address.postalCode}
+                      onChange={(e) =>
+                        setAddress({ ...address, postalCode: e.target.value })
+                      }
+                      placeholder="10001"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Phone (optional)</label>
+                  <input
+                    type="tel"
+                    value={address.phone}
+                    onChange={(e) =>
+                      setAddress({ ...address, phone: e.target.value })
+                    }
+                    className={inputClass}
+                  />
+                </div>
+                <p className="font-sans text-[11px] tracking-[0.05em] text-ink-light">
+                  Country: United States (US). Other destinations coming soon.
+                </p>
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
-              <h2 className="font-serif text-xl text-zinc-900 dark:text-zinc-50">
+            <div>
+              <h2 className="mb-6 font-display text-[28px] text-ink">
                 Shipping method
               </h2>
+              <p className="mb-3 font-sans text-[10px] uppercase tracking-[0.15em] text-ink-light">
+                All orders: production 3–5 business days before handoff to carrier
+              </p>
 
-              <div className="space-y-3">
-                <label
-                  className={`flex cursor-pointer items-start justify-between rounded border px-4 py-4 text-sm ${
-                    shippingMethod === "standard"
-                      ? "border-zinc-900 dark:border-zinc-50"
-                      : "border-zinc-300 dark:border-zinc-700"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      checked={shippingMethod === "standard"}
-                      onChange={() => setShippingMethod("standard")}
-                      className="mt-1"
-                    />
+              {(
+                [
+                  {
+                    key: "standard" as const,
+                    label: "Standard",
+                    days: "5–8 business days",
+                    cents: 999,
+                  },
+                  {
+                    key: "expedited" as const,
+                    label: "Expedited",
+                    days: "2–3 business days",
+                    cents: 2499,
+                  },
+                ]
+              ).map((opt) => {
+                const active = shippingMethod === opt.key;
+                return (
+                  <button
+                    type="button"
+                    key={opt.key}
+                    onClick={() => setShippingMethod(opt.key)}
+                    className={[
+                      "mb-2 flex w-full items-center justify-between border px-5 py-4 text-left transition-colors",
+                      active
+                        ? "border-ink bg-ink"
+                        : "border-[color:var(--border)] bg-cream",
+                    ].join(" ")}
+                  >
                     <div>
-                      <div className="font-medium text-zinc-900 dark:text-zinc-50">
-                        Standard
-                      </div>
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                        5–8 business days
-                      </div>
+                      <p
+                        className={[
+                          "mb-1 font-sans text-[13px] font-medium tracking-[0.06em]",
+                          active ? "text-cream" : "text-ink",
+                        ].join(" ")}
+                      >
+                        {opt.label}
+                      </p>
+                      <p
+                        className={[
+                          "font-serif text-[15px]",
+                          active ? "text-[#C8B89A]" : "text-ink-light",
+                        ].join(" ")}
+                      >
+                        Estimated delivery in {opt.days} after production
+                      </p>
                     </div>
-                  </div>
-                  <div className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {fmt(999)}
-                  </div>
-                </label>
-
-                <label
-                  className={`flex cursor-pointer items-start justify-between rounded border px-4 py-4 text-sm ${
-                    shippingMethod === "expedited"
-                      ? "border-zinc-900 dark:border-zinc-50"
-                      : "border-zinc-300 dark:border-zinc-700"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      checked={shippingMethod === "expedited"}
-                      onChange={() => setShippingMethod("expedited")}
-                      className="mt-1"
-                    />
-                    <div>
-                      <div className="font-medium text-zinc-900 dark:text-zinc-50">
-                        Expedited
-                      </div>
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                        2–3 business days
-                      </div>
-                    </div>
-                  </div>
-                  <div className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {fmt(2499)}
-                  </div>
-                </label>
-              </div>
+                    <p
+                      className={[
+                        "ml-5 shrink-0 font-display text-[22px] tabular-nums",
+                        active ? "text-parchment" : "text-ink",
+                      ].join(" ")}
+                    >
+                      {fmt(opt.cents)}
+                    </p>
+                  </button>
+                );
+              })}
 
               {paymentError && (
-                <p className="text-sm text-red-600">{paymentError}</p>
+                <p className="mt-3 font-serif text-sm text-venetian">{paymentError}</p>
               )}
-
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  disabled={processing}
-                  onClick={loadPaymentIntent}
-                  className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900"
-                >
-                  {processing ? "Preparing…" : "Continue to payment"}
-                </button>
-              </div>
             </div>
           )}
 
           {step === 3 && intentData && (
-            <div className="space-y-6">
-              <h2 className="font-serif text-xl text-zinc-900 dark:text-zinc-50">
-                Payment
-              </h2>
+            <div>
+              <h2 className="mb-2 font-display text-[28px] text-ink">Payment</h2>
+              <p className="mb-6 font-serif text-[15px] text-ink-light">
+                All transactions are secured and encrypted via Stripe.
+              </p>
 
               <Elements
                 stripe={stripePromise}
@@ -456,76 +407,100 @@ export default function CheckoutPage() {
                   onSuccess={handleSuccess}
                 />
               </Elements>
-
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-              >
-                ← Back to shipping method
-              </button>
             </div>
           )}
+
+          <div className="mt-8 flex items-center justify-between">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
+                className="font-sans text-[11px] uppercase tracking-[0.1em] text-ink-light underline hover:text-ink"
+              >
+                ← Back
+              </button>
+            ) : (
+              <Link
+                href="/cart"
+                className="font-sans text-[11px] uppercase tracking-[0.1em] text-ink-light underline hover:text-ink"
+              >
+                ← Return to cart
+              </Link>
+            )}
+
+            {step === 1 && (
+              <button
+                type="button"
+                disabled={!step1Valid()}
+                onClick={() => setStep(2)}
+                className="bg-venetian px-7 py-3 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark disabled:opacity-40"
+              >
+                Continue →
+              </button>
+            )}
+            {step === 2 && (
+              <button
+                type="button"
+                disabled={processing}
+                onClick={loadPaymentIntent}
+                className="bg-venetian px-7 py-3 font-sans text-[13px] font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian-dark disabled:opacity-40"
+              >
+                {processing ? "Preparing…" : "Continue to payment →"}
+              </button>
+            )}
+          </div>
         </div>
 
-        <aside className="lg:col-span-1">
-          <div className="rounded border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <h3 className="font-serif text-lg text-zinc-900 dark:text-zinc-50">
-              Order summary
-            </h3>
-
-            <ul className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800">
-              {cart.items.map((item) => (
-                <li key={item.id} className="py-3 text-sm">
-                  <div className="font-medium text-zinc-900 dark:text-zinc-50">
+        <aside className="sticky top-20 min-w-[260px] border border-[color:var(--border-light)] bg-cream p-6">
+          <p className="mb-3.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ink-light">
+            Order Summary
+          </p>
+          <ul className="mb-4 flex flex-col gap-3">
+            {cart.items.map((item) => (
+              <li key={item.id} className="flex items-center gap-3">
+                <div className="h-[60px] w-12 shrink-0 overflow-hidden bg-[color:var(--parchment-mid)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-[15px] leading-[1.2] text-ink">
                     {item.artworkTitle}
-                  </div>
-                  {item.artistName && (
-                    <div className="text-xs text-zinc-500 dark:text-zinc-500">
-                      {item.artistName}
-                    </div>
-                  )}
-                  <div className="mt-1 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                    <span>
-                      {item.printSize} ·{" "}
-                      {PAPER_LABELS[item.paperType] ?? item.paperType} · qty{" "}
-                      {item.quantity}
-                    </span>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      {fmt(item.lineTotalCents)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <dl className="mt-5 space-y-2 border-t border-zinc-200 pt-4 text-sm dark:border-zinc-800">
-              <div className="flex items-center justify-between">
-                <dt className="text-zinc-600 dark:text-zinc-400">Subtotal</dt>
-                <dd className="text-zinc-900 dark:text-zinc-50">
-                  {fmt(
-                    intentData?.subtotalCents ?? cart.subtotalCents,
-                  )}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-zinc-600 dark:text-zinc-400">Shipping</dt>
-                <dd className="text-zinc-900 dark:text-zinc-50">
-                  {step >= 2
-                    ? fmt(intentData?.shippingCents ?? shippingCostPreview)
-                    : "—"}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between border-t border-zinc-200 pt-3 font-medium dark:border-zinc-800">
-                <dt className="text-zinc-900 dark:text-zinc-50">Total</dt>
-                <dd className="text-zinc-900 dark:text-zinc-50">
-                  {fmt(
-                    intentData?.totalCents ??
-                      (step >= 2 ? totalPreview : cart.subtotalCents),
-                  )}
-                </dd>
-              </div>
-            </dl>
+                  </p>
+                  <p className="font-sans text-[10px] tracking-[0.06em] text-ink-light">
+                    {item.printSize} ·{" "}
+                    {PAPER_LABELS[item.paperType] ?? item.paperType} · qty{" "}
+                    {item.quantity}
+                  </p>
+                </div>
+                <p className="shrink-0 font-display text-[17px] text-ink tabular-nums">
+                  {fmt(item.lineTotalCents)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-col gap-1.5 border-t border-[color:var(--border-light)] pt-3">
+            <div className="flex justify-between font-serif text-[15px]">
+              <span className="text-ink-light">Subtotal</span>
+              <span className="text-ink-mid tabular-nums">
+                {fmt(intentData?.subtotalCents ?? cart.subtotalCents)}
+              </span>
+            </div>
+            <div className="flex justify-between font-serif text-[15px]">
+              <span className="text-ink-light">Shipping</span>
+              <span className="text-ink-mid tabular-nums">
+                {step >= 2
+                  ? fmt(intentData?.shippingCents ?? shippingCostPreview)
+                  : "—"}
+              </span>
+            </div>
+            <div className="mt-1 flex justify-between border-t border-[color:var(--border-light)] pt-2.5">
+              <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-ink">
+                Total
+              </span>
+              <span className="font-display text-[22px] text-ink tabular-nums">
+                {fmt(
+                  intentData?.totalCents ??
+                    (step >= 2 ? totalPreview : cart.subtotalCents),
+                )}
+              </span>
+            </div>
           </div>
         </aside>
       </div>
@@ -602,16 +577,19 @@ function PaymentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <PaymentElement />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="font-serif text-sm text-venetian">{error}</p>}
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="w-full rounded-full bg-zinc-900 py-3 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900"
+        className="w-full bg-venetian px-6 py-3.5 font-sans text-[13px] font-medium uppercase tracking-[0.15em] text-cream transition-colors hover:bg-venetian-dark disabled:opacity-40"
       >
         {processing ? "Processing…" : `Pay ${fmt(intentData.totalCents)}`}
       </button>
+      <p className="text-center font-sans text-[10px] tracking-[0.08em] text-ink-light">
+        🔒 Secured by Stripe · No card data stored on our servers
+      </p>
     </form>
   );
 }

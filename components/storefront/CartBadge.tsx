@@ -26,8 +26,19 @@ export function CartBadge() {
     };
   }, []);
 
-  const label =
-    count && count > 0 ? `Cart (${count})` : "Cart";
+  const hasItems = count != null && count > 0;
+  const label = hasItems ? `Cart (${count})` : "Cart";
 
-  return <Link href="/cart">{label}</Link>;
+  return (
+    <Link
+      href="/cart"
+      className={
+        hasItems
+          ? "font-sans text-[13px] font-medium tracking-[0.08em] text-venetian transition-colors hover:text-venetian-dark"
+          : "font-sans text-[13px] tracking-[0.08em] text-ink-mid transition-colors hover:text-venetian"
+      }
+    >
+      {label}
+    </Link>
+  );
 }

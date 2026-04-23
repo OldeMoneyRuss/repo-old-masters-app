@@ -4,12 +4,21 @@ import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { artworks, artists, movements, assets } from "@/db/schema";
 import { publicUrl } from "@/lib/storage";
+import { Ornament } from "@/components/storefront/Ornament";
 
 export const dynamic = "force-dynamic";
 
 type SortKey = "featured" | "newest" | "title" | "artist";
 
 const PAGE_SIZE = 24;
+
+const fieldLabel =
+  "mb-1.5 font-sans text-[10px] uppercase tracking-[0.15em] text-ink-light";
+
+const inputClass =
+  "w-full border border-[color:var(--border)] bg-cream px-3.5 py-2.5 font-serif text-base text-ink outline-none focus:border-lapis";
+
+const selectClass = `${inputClass} cursor-pointer appearance-none`;
 
 export default async function CatalogPage({
   searchParams,
@@ -62,8 +71,6 @@ export default async function CatalogPage({
       artistName: artists.name,
       movementName: movements.name,
       catalogKey: assets.key,
-      catalogWidth: assets.widthPx,
-      catalogHeight: assets.heightPx,
     })
     .from(artworks)
     .leftJoin(artists, eq(artists.id, artworks.artistId))
@@ -114,148 +121,206 @@ export default async function CatalogPage({
     return s ? `?${s}` : "";
   };
 
+  const activeFilters: Array<{ label: string; clearHref: string }> = [];
+  if (sp.artist) {
+    const a = artistOptions.find((o) => o.slug === sp.artist);
+    activeFilters.push({
+      label: a?.name ?? sp.artist,
+      clearHref: `/catalog${mkQs({ artist: undefined })}`,
+    });
+  }
+  if (sp.movement) {
+    const m = movementOptions.find((o) => o.slug === sp.movement);
+    activeFilters.push({
+      label: m?.name ?? sp.movement,
+      clearHref: `/catalog${mkQs({ movement: undefined })}`,
+    });
+  }
+  if (sp.orientation) {
+    activeFilters.push({
+      label: sp.orientation,
+      clearHref: `/catalog${mkQs({ orientation: undefined })}`,
+    });
+  }
+  if (q) {
+    activeFilters.push({
+      label: `“${q}”`,
+      clearHref: `/catalog${mkQs({ q: undefined })}`,
+    });
+  }
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
-      <header className="mb-8 flex flex-col gap-1">
-        <h1 className="font-serif text-4xl tracking-tight text-zinc-900 dark:text-zinc-50">
-          Catalog
+    <section className="mx-auto max-w-[1180px] px-8 py-12">
+      <header className="mb-9">
+        <p className="mb-2.5 font-sans text-[11px] font-medium uppercase tracking-[0.2em] text-ink-light">
+          The Collection
+        </p>
+        <h1 className="font-display text-[48px] font-normal tracking-tight text-ink">
+          Catalogue
         </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 font-serif text-base text-ink-light">
           {totalCount} {totalCount === 1 ? "artwork" : "artworks"}
+          {activeFilters.length > 0 ? " matching current filters" : " in the collection"}
         </p>
       </header>
 
       <form
         method="get"
-        className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-zinc-200 bg-white p-4 md:grid-cols-5 dark:border-zinc-800 dark:bg-zinc-950"
+        className="mb-7 flex flex-wrap items-end gap-3 border border-[color:var(--border)] bg-cream px-6 py-5"
       >
-        <input
-          type="search"
-          name="q"
-          defaultValue={q}
-          placeholder="Search title, description, artist"
-          className="md:col-span-2 rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <select
-          name="artist"
-          defaultValue={sp.artist ?? ""}
-          className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="">All artists</option>
-          {artistOptions.map((a) => (
-            <option key={a.slug} value={a.slug}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="movement"
-          defaultValue={sp.movement ?? ""}
-          className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="">All movements</option>
-          {movementOptions.map((m) => (
-            <option key={m.slug} value={m.slug}>
-              {m.name}
-            </option>
-          ))}
-        </select>
-        <div className="flex gap-2">
+        <div className="min-w-0 flex-[1_1_220px]">
+          <p className={fieldLabel}>Search</p>
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="Title, artist, movement…"
+            className={inputClass}
+          />
+        </div>
+        <div className="min-w-0 flex-[1_1_160px]">
+          <p className={fieldLabel}>Artist</p>
+          <select name="artist" defaultValue={sp.artist ?? ""} className={selectClass}>
+            <option value="">All artists</option>
+            {artistOptions.map((a) => (
+              <option key={a.slug} value={a.slug}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 flex-[1_1_160px]">
+          <p className={fieldLabel}>Movement</p>
+          <select name="movement" defaultValue={sp.movement ?? ""} className={selectClass}>
+            <option value="">All movements</option>
+            {movementOptions.map((m) => (
+              <option key={m.slug} value={m.slug}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 flex-[1_1_130px]">
+          <p className={fieldLabel}>Format</p>
           <select
             name="orientation"
             defaultValue={sp.orientation ?? ""}
-            className="flex-1 rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className={selectClass}
           >
-            <option value="">Any shape</option>
+            <option value="">Any</option>
             <option value="portrait">Portrait</option>
             <option value="landscape">Landscape</option>
             <option value="square">Square</option>
           </select>
-          <select
-            name="sort"
-            defaultValue={sortKey}
-            className="flex-1 rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-          >
+        </div>
+        <div className="min-w-0 flex-[1_1_130px]">
+          <p className={fieldLabel}>Sort</p>
+          <select name="sort" defaultValue={sortKey} className={selectClass}>
             <option value="featured">Featured</option>
             <option value="newest">Newest</option>
             <option value="title">Title A–Z</option>
             <option value="artist">Artist A–Z</option>
           </select>
         </div>
-        <div className="md:col-span-5 flex gap-3">
+        <div className="flex w-full gap-2">
           <button
             type="submit"
-            className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white dark:bg-zinc-50 dark:text-zinc-900"
+            className="bg-ink px-6 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.1em] text-cream transition-colors hover:bg-venetian"
           >
             Apply
           </button>
           <Link
             href="/catalog"
-            className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium dark:border-zinc-700"
+            className="border border-[color:var(--border)] px-6 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.1em] text-ink-mid transition-colors hover:border-ink"
           >
             Reset
           </Link>
         </div>
       </form>
 
+      {activeFilters.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {activeFilters.map((f) => (
+            <Link
+              key={f.label}
+              href={f.clearHref}
+              className="flex items-center gap-1.5 border border-lapis px-3 py-1.5 font-sans text-[11px] tracking-[0.08em] text-lapis"
+            >
+              {f.label} <span className="text-sm leading-none">×</span>
+            </Link>
+          ))}
+          <Link
+            href="/catalog"
+            className="border border-[color:var(--border)] px-3 py-1.5 font-sans text-[11px] tracking-[0.08em] text-ink-light"
+          >
+            Clear all
+          </Link>
+        </div>
+      )}
+
       {pageRows.length === 0 ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          No artworks match these filters.
-        </p>
+        <div className="px-8 py-20 text-center">
+          <p className="font-display text-[28px] text-ink-light">
+            No artworks match these filters.
+          </p>
+          <Link
+            href="/catalog"
+            className="mt-5 inline-block font-sans text-xs uppercase tracking-[0.08em] text-lapis underline"
+          >
+            Clear all filters
+          </Link>
+        </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-7 sm:grid-cols-3 lg:grid-cols-5">
           {pageRows.map((r) => (
             <li key={r.id}>
-              <Link
-                href={`/catalog/${r.slug}`}
-                className="group flex flex-col gap-2"
-              >
-                <div className="relative aspect-[3/4] overflow-hidden rounded bg-zinc-100 dark:bg-zinc-900">
+              <Link href={`/catalog/${r.slug}`} className="group block">
+                <div className="relative aspect-[3/4] overflow-hidden border border-[color:var(--border-light)] bg-[color:var(--parchment-mid)] shadow-[0_2px_8px_rgba(40,20,0,0.06)] transition-all duration-200 group-hover:border-gold group-hover:shadow-[0_8px_32px_rgba(40,20,0,0.14)]">
                   {r.catalogKey ? (
                     <Image
                       src={publicUrl(r.catalogKey)}
                       alt={r.title}
                       fill
-                      sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                      className="object-contain transition duration-200 group-hover:scale-[1.02]"
+                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-contain p-3 transition-transform duration-[400ms] ease-out group-hover:scale-[1.04]"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                      No image
+                    <div className="flex h-full items-center justify-center font-sans text-xs text-ink-light">
+                      artwork image
                     </div>
                   )}
                 </div>
-                <div>
-                  <p className="font-serif text-base leading-snug text-zinc-900 group-hover:underline dark:text-zinc-50">
-                    {r.title}
-                  </p>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {r.artistName ?? "Unknown artist"}
-                  </p>
-                </div>
+                <p className="mt-2.5 font-display text-[17px] font-medium leading-[1.25] text-ink transition-colors group-hover:text-venetian">
+                  {r.title}
+                </p>
+                <p className="font-sans text-[11px] uppercase tracking-[0.1em] text-ink-light">
+                  {r.artistName ?? "Unknown artist"}
+                </p>
               </Link>
             </li>
           ))}
         </ul>
       )}
 
-      <nav className="mt-10 flex items-center justify-between text-sm">
+      <nav className="mt-12 flex items-center justify-between font-sans text-xs uppercase tracking-[0.08em]">
         {page > 1 ? (
-          <Link href={`/catalog${mkQs({ page: String(page - 1) })}`} className="underline">
+          <Link href={`/catalog${mkQs({ page: String(page - 1) })}`} className="text-lapis">
             ← Previous
           </Link>
         ) : (
-          <span className="text-zinc-400">← Previous</span>
+          <span className="text-ink-light/60">← Previous</span>
         )}
-        <span className="text-zinc-500">Page {page}</span>
+        <span className="text-ink-light">Page {page}</span>
         {hasNextPage ? (
-          <Link href={`/catalog${mkQs({ page: String(page + 1) })}`} className="underline">
+          <Link href={`/catalog${mkQs({ page: String(page + 1) })}`} className="text-lapis">
             Next →
           </Link>
         ) : (
-          <span className="text-zinc-400">Next →</span>
+          <span className="text-ink-light/60">Next →</span>
         )}
       </nav>
+
+      <Ornament className="mt-16" />
     </section>
   );
 }
