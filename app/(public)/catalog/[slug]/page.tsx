@@ -13,6 +13,11 @@ import {
 import { publicUrl } from "@/lib/storage";
 import { getPricing } from "@/lib/pricing";
 import { PdpConfigurator } from "@/components/storefront/PdpConfigurator";
+import {
+  JsonLd,
+  artworkProductJsonLd,
+  breadcrumbJsonLd,
+} from "@/lib/seo/json-ld";
 
 export const revalidate = 300;
 
@@ -205,7 +210,28 @@ export default async function ArtworkDetailPage({
         }>),
   ]);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oldmastersprint.shop";
+  const pageUrl = `${siteUrl}/catalog/${artwork.slug}`;
+  const pdpImageUrl = pdpAsset?.key ? publicUrl(pdpAsset.key) : null;
+
   return (
+    <>
+      <JsonLd
+        data={artworkProductJsonLd({
+          title: artwork.title,
+          artistName: artwork.artistName,
+          description: artwork.shortDescription,
+          imageUrl: pdpImageUrl,
+          pageUrl,
+          basePriceCents: pricingSnap.basePriceCents,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Catalog", url: `${siteUrl}/catalog` },
+          { name: artwork.title, url: pageUrl },
+        ])}
+      />
     <PdpConfigurator
       artwork={{
         id: artwork.id,
@@ -233,5 +259,6 @@ export default async function ArtworkDetailPage({
       relatedByArtist={relatedByArtistRows}
       relatedByMovement={relatedByMovementRows}
     />
+    </>
   );
 }
