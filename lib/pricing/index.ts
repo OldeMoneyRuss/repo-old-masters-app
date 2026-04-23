@@ -1,18 +1,14 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { pricingConfig, type PriceModifiers } from "@/db/schema/pricing";
+import { pricingConfig } from "@/db/schema/pricing";
+import {
+  unitPriceCents,
+  type PriceInput,
+  type PricingSnapshot,
+} from "./calc";
 
-export type PriceInput = {
-  printSize: string;
-  paperType: string;
-};
-
-export type PricingSnapshot = {
-  basePriceCents: number;
-  sizeModifiers: PriceModifiers;
-  paperModifiers: PriceModifiers;
-  updatedAt: Date;
-};
+export { unitPriceCents };
+export type { PriceInput, PricingSnapshot };
 
 let cached: { snap: PricingSnapshot; cachedAt: number } | null = null;
 const CACHE_TTL_MS = 60_000;
@@ -38,15 +34,6 @@ export async function getPricing(): Promise<PricingSnapshot> {
 
 export function invalidatePricingCache(): void {
   cached = null;
-}
-
-export function unitPriceCents(
-  snap: PricingSnapshot,
-  input: PriceInput,
-): number {
-  const sizeMod = snap.sizeModifiers[input.printSize] ?? 0;
-  const paperMod = snap.paperModifiers[input.paperType] ?? 0;
-  return Math.max(0, snap.basePriceCents + sizeMod + paperMod);
 }
 
 export async function priceFor(input: PriceInput): Promise<number> {

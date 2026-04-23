@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { publicUrl } from "@/lib/storage";
-import { unitPriceCents, type PricingSnapshot } from "@/lib/pricing";
+import { unitPriceCents, type PricingSnapshot } from "@/lib/pricing/calc";
 
 type RelatedCard = {
   slug: string;

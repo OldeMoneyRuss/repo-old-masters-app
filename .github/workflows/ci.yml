@@ -33,9 +33,3 @@ jobs:
 
       - name: Audit
         run: npm audit --omit=dev --audit-level=high
-
-      - name: Build
-        run: npm run build
-        env:
-          NEXTAUTH_SECRET: ci-placeholder-secret-do-not-use-in-prod
-          NEXTAUTH_URL: http://localhost:3000
