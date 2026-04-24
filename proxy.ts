@@ -1,7 +1,5 @@
-export const runtime = "nodejs";
-
 import NextAuth from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { authConfig } from "@/lib/auth/config";
 
@@ -33,10 +31,9 @@ function buildCsp(nonce: string): string {
   ].join("; ");
 }
 
-export default async function proxy(req: NextRequest) {
+export default auth(() => {
   const nonce = crypto.randomBytes(16).toString("base64");
-  const res = ((await auth(req as Parameters<typeof auth>[0])) ??
-    NextResponse.next()) as NextResponse;
+  const res = NextResponse.next();
 
   res.headers.set("Content-Security-Policy", buildCsp(nonce));
   res.headers.set("X-Nonce", nonce);
@@ -53,7 +50,7 @@ export default async function proxy(req: NextRequest) {
   );
 
   return res;
-}
+});
 
 export const config = {
   matcher: [
